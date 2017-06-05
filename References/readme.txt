@@ -1,0 +1,1 @@
+This folder contains references that useful to design and implement the game.
