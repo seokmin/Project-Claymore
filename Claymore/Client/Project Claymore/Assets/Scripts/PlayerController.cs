@@ -2,8 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
 	[SerializeField]
 	private float _moveSpeed = 0.1f;
@@ -14,6 +15,9 @@ public class PlayerController : MonoBehaviour
 
 	public void FixedUpdate()
 	{
+		if (false == isLocalPlayer)
+			return;
+
 		handlePlayerMove();
 		//if (Input.GetKeyDown(KeyCode.A))
 			handlePlayerRotation();
@@ -45,5 +49,11 @@ public class PlayerController : MonoBehaviour
 		var moveVector = playerDirection.normalized;
 
 		_rigidBody.MovePosition(_rigidBody.position + moveVector * _moveSpeed);
+	}
+
+	public override void OnStartLocalPlayer()
+	{
+		var camera = GameObject.Find("TopdownCamera");
+		camera.GetComponent<CameraFollow>().Target = transform;
 	}
 }
