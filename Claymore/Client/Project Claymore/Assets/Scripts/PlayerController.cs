@@ -12,6 +12,11 @@ public class PlayerController : NetworkBehaviour
 	[SerializeField]
 	private Rigidbody2D _rigidBody = null;
 
+	[SerializeField]
+	public Transform _bulletPoint = null;
+
+	[SerializeField]
+	public GameObject _bullet_Rifle = null;
 
 	public void FixedUpdate()
 	{
@@ -19,10 +24,61 @@ public class PlayerController : NetworkBehaviour
 			return;
 
 		handlePlayerMove();
-		//if (Input.GetKeyDown(KeyCode.A))
-			handlePlayerRotation();
+		handlePlayerRotation();
+		handleShooting();
 	}
 	
+	private void handleShooting()
+	{
+		if(Input.GetMouseButton(0))
+		{
+			tryShoot(WeaponType.kRifle);
+		}
+	}
+
+	public enum WeaponType
+	{
+		kNone	= 0,
+		kRifle	= 1,
+	}
+
+	private float _lastTimeShoot = 0.0f;
+
+	private void tryShoot(WeaponType weapon)
+	{
+		switch(weapon)
+		{
+			case WeaponType.kRifle:
+				{
+					if (Time.time - _lastTimeShoot > 0.15f)
+					{
+						_lastTimeShoot = Time.time;
+						CmdFire(weapon, Camera.main.ScreenToWorldPoint(Input.mousePosition));
+					}
+				}
+				break;
+		}
+	}
+
+	[Command]
+	private void CmdFire(WeaponType weapon, Vector3 destination)
+	{
+		var bullet = (GameObject)Instantiate(
+			_bullet_Rifle, _bulletPoint.position, _bulletPoint.rotation);
+
+		var forwardVector = destination - bullet.transform.position;
+		forwardVector.z = 0;
+		forwardVector.Normalize();
+		forwardVector *= 100;
+
+		bullet.GetComponent<Rigidbody2D>().velocity = forwardVector;
+
+		NetworkServer.Spawn(bullet);
+
+		Destroy(bullet, 1.0f);
+	}
+
+
 	private void handlePlayerRotation()
 	{
 		var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
